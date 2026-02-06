@@ -117,18 +117,19 @@ export default function HomePage() {
               if (!key) return;
               seen.add(key);
               const existing = prev[key];
+              const initialSeenAt = existing?.firstSeenAt ?? session.updatedAt ?? Date.now();
               const nextItem: SessionItem = {
                 ...existing,
                 session,
                 lastMessage: session.lastMessage ?? existing?.lastMessage ?? null,
                 lastRole: session.lastRole ?? existing?.lastRole ?? null,
                 deleted: false,
-                firstSeenAt: existing?.firstSeenAt ?? Date.now()
+                firstSeenAt: initialSeenAt
               };
               const previousColumn = existing ? resolveColumn(existing) : null;
               const nextColumn = resolveColumn(nextItem);
               nextItem.columnEnteredAt = previousColumn === nextColumn
-                ? existing?.columnEnteredAt ?? Date.now()
+                ? existing?.columnEnteredAt ?? (session.updatedAt ?? initialSeenAt)
                 : Date.now();
               next[key] = nextItem;
             });
