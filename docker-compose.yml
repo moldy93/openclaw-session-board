@@ -1,0 +1,15 @@
+services:
+  kanban:
+    image: node:20-bullseye
+    working_dir: /app
+    command: bash -lc "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+      - /Users/m/.openclaw/workspace/kanban/db:/app/db
+    environment:
+      - NODE_ENV=development
+      - OPENCLAW_GATEWAY_WS=ws://host.docker.internal:18789
+      - OPENCLAW_GATEWAY_URL=http://host.docker.internal:18789
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}

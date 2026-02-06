@@ -1,0 +1,6 @@
+node_modules/
+.next/
+db/
+.openclaw-device.json
+.env
+.env.*
