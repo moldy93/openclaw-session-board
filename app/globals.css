@@ -209,11 +209,11 @@ small {
 }
 
 .copy {
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(15, 23, 42, 0.4);
+  border: none;
+  background: transparent;
   color: #e2e8f0;
   border-radius: 8px;
-  padding: 2px 6px;
+  padding: 2px 4px;
   cursor: pointer;
 }
 
