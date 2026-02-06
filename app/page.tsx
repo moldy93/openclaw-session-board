@@ -280,15 +280,6 @@ export default function HomePage() {
                         ⧉
                       </button>
                     </div>
-                    {item.firstSeenAt && (
-                      <div className="meta-row">
-                        <span className="meta-label">Created</span>
-                        <span className="meta-value" title={formatDateTime(item.firstSeenAt)}>
-                          {formatDistance(item.firstSeenAt)}
-                        </span>
-                        <span />
-                      </div>
-                    )}
                     <div className="meta-row">
                       <span className="meta-label">Updated</span>
                       <span className="meta-value" title={formatDateTime(updatedAt)}>
