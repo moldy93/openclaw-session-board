@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 type GatewaySession = {
@@ -75,8 +77,12 @@ const formatAgo = (ms: number) => {
 
 const formatDateTime = (value?: number) => {
   if (!value) return '—';
-  const date = new Date(value);
-  return date.toLocaleString();
+  return new Date(value).toLocaleString();
+};
+
+const formatDistance = (value?: number) => {
+  if (!value) return '—';
+  return formatDistanceToNow(value, { addSuffix: true, locale: de });
 };
 
 export default function HomePage() {
@@ -275,12 +281,16 @@ export default function HomePage() {
                     </div>
                     <div className="meta-row">
                       <span className="meta-label">Created</span>
-                      <span className="meta-value">{formatDateTime(item.firstSeenAt)}</span>
+                      <span className="meta-value" title={formatDateTime(item.firstSeenAt)}>
+                        {formatDistance(item.firstSeenAt)}
+                      </span>
                       <span />
                     </div>
                     <div className="meta-row">
                       <span className="meta-label">Updated</span>
-                      <span className="meta-value">{formatDateTime(updatedAt)}</span>
+                      <span className="meta-value" title={formatDateTime(updatedAt)}>
+                        {formatDistance(updatedAt)}
+                      </span>
                       <span />
                     </div>
                   </div>
