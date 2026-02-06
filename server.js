@@ -337,7 +337,23 @@ app.prepare().then(() => {
       const line = readLastLogLine();
       if (!line || line === lastLogLine) return;
       lastLogLine = line;
-      send({ type: 'log', payload: { line } });
+      let formatted = line;
+      try {
+        const parsed = JSON.parse(line);
+        const time = parsed?.time ? new Date(parsed.time).toLocaleTimeString() : '';
+        const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
+        const subsystem = parsed?.0 ? (() => {
+          try {
+            const obj = JSON.parse(parsed[0]);
+            return obj?.subsystem || parsed[0];
+          } catch {
+            return parsed[0];
+          }
+        })() : '';
+        const msg = parsed?.1 || parsed?.message || parsed?.msg || '';
+        formatted = `${time} ${level} ${subsystem} ${msg}`.trim().replace(/\s+/g, ' ');
+      } catch {}
+      send({ type: 'log', payload: { line: formatted } });
     };
 
     interval = setInterval(() => {
