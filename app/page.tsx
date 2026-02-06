@@ -240,8 +240,7 @@ export default function HomePage() {
                     : (doneRef as React.RefObject<HTMLDivElement>)
             }
           >
-            <h2>{column}</h2>
-            {grouped[column].length === 0 && <small className="muted">No sessions.</small>}
+            <h2 className="column-title">{column}</h2>
             {grouped[column].map((item) => {
               const sessionKey = getSessionKey(item.session) ?? 'unknown';
               const sessionId = getSessionId(item.session);

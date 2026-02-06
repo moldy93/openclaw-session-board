@@ -68,12 +68,14 @@ small {
   background: transparent;
 }
 
-.column h2 {
-  margin: 0;
+.column-title {
+  margin: 0 0 6px;
   font-size: 12px;
-  color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.3em;
+  color: rgba(148, 163, 184, 0.35);
+  text-shadow: 0 1px 2px rgba(2, 6, 23, 0.8);
+  mix-blend-mode: screen;
 }
 
 .card {
