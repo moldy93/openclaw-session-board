@@ -1,16 +1,12 @@
 :root {
-  color-scheme: light;
-  --bg: #f5f7fb;
-  --card: #ffffff;
-  --text: #1f2937;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --primary: #2563eb;
-  --pill: #e0e7ff;
-  --backlog-bg: rgba(226, 232, 240, 0.6);
-  --doing-bg: rgba(219, 234, 254, 0.7);
-  --review-bg: rgba(243, 232, 255, 0.7);
-  --done-bg: rgba(226, 254, 232, 0.6);
+  color-scheme: dark;
+  --bg: #0f172a;
+  --card: rgba(15, 23, 42, 0.7);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --border: rgba(148, 163, 184, 0.2);
+  --primary: #60a5fa;
+  --pill: rgba(148, 163, 184, 0.2);
   --backlog-accent: #94a3b8;
   --doing-accent: #60a5fa;
   --review-accent: #a78bfa;
@@ -25,7 +21,7 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
-  background: linear-gradient(90deg, #f8fafc 0%, #f0f9ff 35%, #f5f3ff 65%, #f0fdf4 100%);
+  background: radial-gradient(circle at top left, #1f2937 0%, #0f172a 40%, #020617 100%);
 }
 
 a {
@@ -67,28 +63,8 @@ small {
   display: grid;
   gap: 10px;
   align-content: start;
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  background: var(--backlog-bg);
-  transition: background 400ms ease, border-color 400ms ease;
-}
-
-.column.backlog {
-  background: var(--backlog-bg);
-}
-
-.column.doing {
-  background: var(--doing-bg);
-  border-color: rgba(96, 165, 250, 0.35);
-}
-
-.column.review {
-  background: var(--review-bg);
-  border-color: rgba(167, 139, 250, 0.35);
-}
-
-.column.done {
-  background: var(--done-bg);
-  border-color: rgba(52, 211, 153, 0.35);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: transparent;
 }
 
 .column h2 {
@@ -100,38 +76,43 @@ small {
 }
 
 .card {
-  background: var(--card);
-  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
   padding: 12px;
-  border: 1px solid var(--border);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   display: grid;
   gap: 10px;
-  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 12px 30px rgba(2, 6, 23, 0.35);
   position: relative;
-  transition: border-color 400ms ease, box-shadow 400ms ease, transform 300ms ease;
+  transition: border-color 400ms ease, box-shadow 400ms ease, transform 300ms ease, background 400ms ease;
+  backdrop-filter: blur(12px);
+  color: #e2e8f0;
 }
 
 .card.backlog {
-  border-color: rgba(148, 163, 184, 0.35);
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.2), rgba(30, 41, 59, 0.6));
+  border-color: rgba(148, 163, 184, 0.4);
 }
 
 .card.doing {
   border: 2px solid transparent;
   background:
-    linear-gradient(var(--card), var(--card)) padding-box,
+    linear-gradient(135deg, rgba(59, 130, 246, 0.35), rgba(14, 116, 144, 0.5)) padding-box,
     conic-gradient(from 0deg, #60a5fa, #a78bfa, #60a5fa) border-box;
   animation: spin-border 3s linear infinite;
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.3);
 }
 
 .card.review {
-  border-color: rgba(167, 139, 250, 0.45);
-  box-shadow: 0 6px 16px rgba(167, 139, 250, 0.1);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.35), rgba(88, 28, 135, 0.55));
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 10px 26px rgba(167, 139, 250, 0.25);
 }
 
 .card.done {
-  border-color: rgba(52, 211, 153, 0.45);
-  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.1);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.28), rgba(22, 101, 52, 0.6));
+  border-color: rgba(34, 197, 94, 0.5);
+  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.2);
 }
 
 @keyframes spin-border {
@@ -143,8 +124,17 @@ small {
 }
 
 .card.review.stale {
-  opacity: 0.5;
-  filter: grayscale(0.6);
+  opacity: 0.45;
+  filter: grayscale(0.7);
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0));
+  pointer-events: none;
 }
 
 .card-title {
