@@ -342,7 +342,7 @@ app.prepare().then(() => {
         const parsed = JSON.parse(line);
         const time = parsed?.time ? new Date(parsed.time).toLocaleTimeString() : '';
         const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
-        const subsystem = parsed?.0 ? (() => {
+        const subsystem = parsed?.[0] ? (() => {
           try {
             const obj = JSON.parse(parsed[0]);
             return obj?.subsystem || parsed[0];
@@ -350,7 +350,7 @@ app.prepare().then(() => {
             return parsed[0];
           }
         })() : '';
-        const msg = parsed?.1 || parsed?.message || parsed?.msg || '';
+        const msg = parsed?.[1] || parsed?.message || parsed?.msg || '';
         formatted = `${time} ${level} ${subsystem} ${msg}`.trim().replace(/\s+/g, ' ');
       } catch {}
       send({ type: 'log', payload: { line: formatted } });
