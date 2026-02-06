@@ -20,6 +20,8 @@ type SessionItem = {
   lastRole?: string | null;
   lastRunState?: string | null;
   deleted?: boolean;
+  firstSeenAt?: number;
+  columnEnteredAt?: number;
 };
 
 const columns = ['backlog', 'doing', 'review', 'done'] as const;
@@ -61,9 +63,26 @@ const resolveColumn = (item: SessionItem): ColumnKey => {
   return 'backlog';
 };
 
+const formatAgo = (ms: number) => {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+};
+
+const formatDateTime = (value?: number) => {
+  if (!value) return '—';
+  const date = new Date(value);
+  return date.toLocaleString();
+};
+
 export default function HomePage() {
   const [sessions, setSessions] = useState<Record<string, SessionItem>>({});
   const [status, setStatus] = useState<'connecting' | 'live' | 'error'>('connecting');
+  const [tick, setTick] = useState(Date.now());
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -91,13 +110,21 @@ export default function HomePage() {
               const key = getSessionKey(session);
               if (!key) return;
               seen.add(key);
-              next[key] = {
-                ...prev[key],
+              const existing = prev[key];
+              const nextItem: SessionItem = {
+                ...existing,
                 session,
-                lastMessage: session.lastMessage ?? prev[key]?.lastMessage ?? null,
-                lastRole: session.lastRole ?? prev[key]?.lastRole ?? null,
-                deleted: false
+                lastMessage: session.lastMessage ?? existing?.lastMessage ?? null,
+                lastRole: session.lastRole ?? existing?.lastRole ?? null,
+                deleted: false,
+                firstSeenAt: existing?.firstSeenAt ?? Date.now()
               };
+              const previousColumn = existing ? resolveColumn(existing) : null;
+              const nextColumn = resolveColumn(nextItem);
+              nextItem.columnEnteredAt = previousColumn === nextColumn
+                ? existing?.columnEnteredAt ?? Date.now()
+                : Date.now();
+              next[key] = nextItem;
             });
             Object.keys(next).forEach((key) => {
               if (!seen.has(key)) {
@@ -117,17 +144,23 @@ export default function HomePage() {
           const runState = chat?.state ?? null;
 
           setSessions((prev) => {
-            const existing = prev[key] ?? { session: { key } };
+            const existing = prev[key] ?? { session: { key }, firstSeenAt: Date.now() };
+            const nextItem: SessionItem = {
+              ...existing,
+              session: existing.session ?? { key },
+              lastRole: role,
+              lastMessage: message ?? existing.lastMessage,
+              lastRunState: runState,
+              deleted: false
+            };
+            const previousColumn = resolveColumn(existing);
+            const nextColumn = resolveColumn(nextItem);
+            nextItem.columnEnteredAt = previousColumn === nextColumn
+              ? existing?.columnEnteredAt ?? Date.now()
+              : Date.now();
             return {
               ...prev,
-              [key]: {
-                ...existing,
-                session: existing.session ?? { key },
-                lastRole: role,
-                lastMessage: message ?? existing.lastMessage,
-                lastRunState: runState,
-                deleted: false
-              }
+              [key]: nextItem
             };
           });
         }
@@ -143,6 +176,11 @@ export default function HomePage() {
     return () => {
       socket.close();
     };
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick(Date.now()), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -195,12 +233,20 @@ export default function HomePage() {
                 : item.session.model ?? '—';
               const updatedAt = item.session.updatedAt ?? 0;
               const isStale = column === 'review' && updatedAt > 0 && Date.now() - updatedAt > 24 * 60 * 60 * 1000;
+              const enteredAt = item.columnEnteredAt ?? updatedAt ?? Date.now();
+              const elapsed = tick - enteredAt;
+              const showReviewTimer = column === 'review' && elapsed < 15 * 60 * 1000;
+              const showDoingTimer = column === 'doing';
 
               return (
                 <div className={`card ${column} ${isStale ? 'stale' : ''}`} key={sessionKey}>
                   <div className="card-title">
                     <strong>{label}</strong>
-                    {item.deleted && <span className="pill">deleted</span>}
+                    <div className="card-badges">
+                      {showDoingTimer && <span className="timer">{formatAgo(elapsed)}</span>}
+                      {showReviewTimer && <span className="timer">{formatAgo(elapsed)}</span>}
+                      {item.deleted && <span className="pill">deleted</span>}
+                    </div>
                   </div>
 
                   <div className="meta">
@@ -226,6 +272,16 @@ export default function HomePage() {
                       >
                         ⧉
                       </button>
+                    </div>
+                    <div className="meta-row">
+                      <span className="meta-label">Created</span>
+                      <span className="meta-value">{formatDateTime(item.firstSeenAt)}</span>
+                      <span />
+                    </div>
+                    <div className="meta-row">
+                      <span className="meta-label">Updated</span>
+                      <span className="meta-value">{formatDateTime(updatedAt)}</span>
+                      <span />
                     </div>
                   </div>
 
