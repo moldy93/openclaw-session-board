@@ -338,9 +338,10 @@ app.prepare().then(() => {
       if (!line || line === lastLogLine) return;
       lastLogLine = line;
       let formatted = line;
+      let time = '';
       try {
         const parsed = JSON.parse(line);
-        const time = parsed?.time ? new Date(parsed.time).toISOString().slice(11, -5) : '';
+        time = parsed?.time ? parsed.time : '';
         const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
         const subsystem = parsed?.[0] ? (() => {
           try {
@@ -351,9 +352,9 @@ app.prepare().then(() => {
           }
         })() : '';
         const msg = parsed?.[1] || parsed?.message || parsed?.msg || '';
-        formatted = `${time} ${level} ${subsystem} ${msg}`.trim().replace(/\s+/g, ' ');
+        formatted = `${level} ${subsystem} ${msg}`.trim().replace(/\s+/g, ' ');
       } catch {}
-      send({ type: 'log', payload: { line: formatted } });
+      send({ type: 'log', payload: { line: formatted, time } });
     };
 
     interval = setInterval(() => {

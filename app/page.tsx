@@ -101,6 +101,7 @@ export default function HomePage() {
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [lastLogLine, setLastLogLine] = useState<string | null>(null);
+  const [lastLogTime, setLastLogTime] = useState<string | null>(null);
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const inputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
@@ -191,6 +192,7 @@ export default function HomePage() {
 
         if (payload?.type === 'log' && payload?.payload?.line) {
           setLastLogLine(payload.payload.line);
+          setLastLogTime(payload.payload.time ?? null);
         }
 
         if (payload?.type === 'error') {
@@ -452,7 +454,9 @@ export default function HomePage() {
       </section>
       {toast && <div className="toast">{toast}</div>}
       <div className="log-footer">
-        <span className="log-line">{lastLogLine ?? '—'}</span>
+        <span className="log-line">
+          {lastLogTime ? `${new Date(lastLogTime).toISOString().slice(11, -5)} ` : ''}{lastLogLine ?? '—'}
+        </span>
         <span className={`status ${status}`}>{status}</span>
       </div>
     </main>
