@@ -176,10 +176,7 @@ export default function HomePage() {
   return (
     <main>
       <header>
-        <div>
-          <h1>OpenClaw Sessions</h1>
-          <small className="muted">Realtime status board · backlog → doing → review → done</small>
-        </div>
+        <div />
         <div className={`status ${status}`}>{status}</div>
       </header>
 
@@ -196,9 +193,11 @@ export default function HomePage() {
               const modelLabel = item.session.modelProvider
                 ? `${item.session.modelProvider}/${item.session.model ?? ''}`.replace(/\/$/, '')
                 : item.session.model ?? '—';
+              const updatedAt = item.session.updatedAt ?? 0;
+              const isStale = column === 'review' && updatedAt > 0 && Date.now() - updatedAt > 24 * 60 * 60 * 1000;
 
               return (
-                <div className="card" key={sessionKey}>
+                <div className={`card ${column} ${isStale ? 'stale' : ''}`} key={sessionKey}>
                   <div className="card-title">
                     <strong>{label}</strong>
                     {item.deleted && <span className="pill">deleted</span>}

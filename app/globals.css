@@ -78,6 +78,28 @@ small {
   display: grid;
   gap: 10px;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  position: relative;
+}
+
+.card.doing {
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--card), var(--card)) padding-box,
+    conic-gradient(from 0deg, #60a5fa, #a78bfa, #60a5fa) border-box;
+  animation: spin-border 3s linear infinite;
+}
+
+@keyframes spin-border {
+  to {
+    background:
+      linear-gradient(var(--card), var(--card)) padding-box,
+      conic-gradient(from 360deg, #60a5fa, #a78bfa, #60a5fa) border-box;
+  }
+}
+
+.card.review.stale {
+  opacity: 0.5;
+  filter: grayscale(0.6);
 }
 
 .card-title {
