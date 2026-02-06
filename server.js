@@ -15,8 +15,6 @@ const handle = app.getRequestHandler();
 const gatewayWs = process.env.OPENCLAW_GATEWAY_WS || 'ws://127.0.0.1:18789';
 const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789';
 const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN || '';
-const logFile = process.env.OPENCLAW_LOG_FILE || '/openclaw-logs/openclaw-latest.log';
-const logDir = process.env.OPENCLAW_LOG_DIR || '/openclaw-logs';
 
 const DEVICE_FILE = path.join(process.cwd(), '.openclaw-device.json');
 const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
@@ -220,6 +218,19 @@ app.prepare().then(() => {
   const server = http.createServer((req, res) => handle(req, res));
   const wss = new WebSocketServer({ server, path: '/ws' });
 
+  const sendLogTail = (ws) => {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+    const id = crypto.randomUUID();
+    ws.send(
+      JSON.stringify({
+        type: 'req',
+        id,
+        method: 'logs.tail',
+        params: { cursor: logCursor ?? 0, limit: 200, maxBytes: 200000 }
+      })
+    );
+  };
+
   wss.on('connection', (client) => {
     if (!gatewayToken) {
       client.send(JSON.stringify({ type: 'error', message: 'missing gateway token' }));
@@ -232,6 +243,7 @@ app.prepare().then(() => {
     let interval = null;
     let logInterval = null;
     let lastLogLine = '';
+    let logCursor = null;
     const lastUpdatedAt = new Map();
 
     const send = (data) => {
@@ -277,6 +289,18 @@ app.prepare().then(() => {
             send({ type: 'sessions', payload: { ...payload?.payload, sessions: updates } });
             return;
           }
+          if (payload?.type === 'res' && payload?.ok && payload?.payload?.lines) {
+            const lines = payload?.payload?.lines || [];
+            logCursor = payload?.payload?.cursor ?? logCursor;
+            if (lines.length > 0) {
+              const line = lines[lines.length - 1];
+              if (line && line !== lastLogLine) {
+                lastLogLine = line;
+                send({ type: 'log', payload: { line, time: null } });
+              }
+            }
+            return;
+          }
           if (payload?.type === 'event' && payload?.event === 'chat') {
             send({ type: 'chat', payload: payload?.payload });
             return;
@@ -312,64 +336,10 @@ app.prepare().then(() => {
 
     connectGateway();
 
-    const resolveLogFile = () => {
-      if (fs.existsSync(logFile)) return logFile;
-      try {
-        const files = fs.readdirSync(logDir)
-          .filter((name) => name.startsWith('openclaw-') && name.endsWith('.log'))
-          .map((name) => ({
-            name,
-            path: path.join(logDir, name),
-            mtime: fs.statSync(path.join(logDir, name)).mtimeMs
-          }))
-          .sort((a, b) => b.mtime - a.mtime);
-        return files.length ? files[0].path : null;
-      } catch {
-        return null;
-      }
-    };
-
-    const readLastLogLine = () => {
-      try {
-        const target = resolveLogFile();
-        if (!target || !fs.existsSync(target)) return null;
-        const stat = fs.statSync(target);
-        if (!stat.isFile() || stat.size === 0) return null;
-        const chunkSize = Math.min(8192, stat.size);
-        const fd = fs.openSync(target, 'r');
-        const buffer = Buffer.alloc(chunkSize);
-        fs.readSync(fd, buffer, 0, chunkSize, stat.size - chunkSize);
-        fs.closeSync(fd);
-        const text = buffer.toString('utf8');
-        const lines = text.split(/\r?\n/).filter(Boolean);
-        return lines.length ? lines[lines.length - 1] : null;
-      } catch {
-        return null;
-      }
-    };
-
     const pollLogLine = () => {
-      const line = readLastLogLine();
-      if (!line || line === lastLogLine) return;
-      lastLogLine = line;
-      let formatted = line;
-      let time = '';
-      try {
-        const parsed = JSON.parse(line);
-        time = parsed?.time ? parsed.time : new Date().toISOString();
-        const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
-        const subsystem = parsed?.[0] ? (() => {
-          try {
-            const obj = JSON.parse(parsed[0]);
-            return obj?.subsystem || parsed[0];
-          } catch {
-            return parsed[0];
-          }
-        })() : '';
-        const msg = parsed?.[1] || parsed?.message || parsed?.msg || '';
-        formatted = `${level} ${subsystem} ${msg}`.trim().replace(/\s+/g, ' ');
-      } catch {}
-      send({ type: 'log', payload: { line: formatted, time } });
+      if (gateway && connected && gateway.readyState === WebSocket.OPEN) {
+        sendLogTail(gateway);
+      }
     };
 
     interval = setInterval(() => {
