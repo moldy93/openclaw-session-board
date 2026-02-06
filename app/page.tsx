@@ -182,7 +182,7 @@ export default function HomePage() {
 
       <section className="board">
         {columns.map((column) => (
-          <div className="column" key={column}>
+          <div className={`column ${column}`} key={column}>
             <h2>{column}</h2>
             {grouped[column].length === 0 && <small className="muted">No sessions.</small>}
             {grouped[column].map((item) => {

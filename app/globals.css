@@ -7,6 +7,14 @@
   --border: #e5e7eb;
   --primary: #2563eb;
   --pill: #e0e7ff;
+  --backlog-bg: rgba(226, 232, 240, 0.6);
+  --doing-bg: rgba(219, 234, 254, 0.7);
+  --review-bg: rgba(243, 232, 255, 0.7);
+  --done-bg: rgba(226, 254, 232, 0.6);
+  --backlog-accent: #94a3b8;
+  --doing-accent: #60a5fa;
+  --review-accent: #a78bfa;
+  --done-accent: #34d399;
 }
 
 * {
@@ -17,7 +25,7 @@ body {
   margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text);
-  background: var(--bg);
+  background: linear-gradient(90deg, #f8fafc 0%, #f0f9ff 35%, #f5f3ff 65%, #f0fdf4 100%);
 }
 
 a {
@@ -53,13 +61,34 @@ small {
 }
 
 .column {
-  background: #eef2ff;
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: 16px;
+  padding: 14px;
   min-height: 200px;
   display: grid;
   gap: 10px;
   align-content: start;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: var(--backlog-bg);
+  transition: background 400ms ease, border-color 400ms ease;
+}
+
+.column.backlog {
+  background: var(--backlog-bg);
+}
+
+.column.doing {
+  background: var(--doing-bg);
+  border-color: rgba(96, 165, 250, 0.35);
+}
+
+.column.review {
+  background: var(--review-bg);
+  border-color: rgba(167, 139, 250, 0.35);
+}
+
+.column.done {
+  background: var(--done-bg);
+  border-color: rgba(52, 211, 153, 0.35);
 }
 
 .column h2 {
@@ -72,13 +101,18 @@ small {
 
 .card {
   background: var(--card);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 12px;
   border: 1px solid var(--border);
   display: grid;
   gap: 10px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.08);
   position: relative;
+  transition: border-color 400ms ease, box-shadow 400ms ease, transform 300ms ease;
+}
+
+.card.backlog {
+  border-color: rgba(148, 163, 184, 0.35);
 }
 
 .card.doing {
@@ -87,6 +121,17 @@ small {
     linear-gradient(var(--card), var(--card)) padding-box,
     conic-gradient(from 0deg, #60a5fa, #a78bfa, #60a5fa) border-box;
   animation: spin-border 3s linear infinite;
+  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
+}
+
+.card.review {
+  border-color: rgba(167, 139, 250, 0.45);
+  box-shadow: 0 6px 16px rgba(167, 139, 250, 0.1);
+}
+
+.card.done {
+  border-color: rgba(52, 211, 153, 0.45);
+  box-shadow: 0 6px 16px rgba(34, 197, 94, 0.1);
 }
 
 @keyframes spin-border {
