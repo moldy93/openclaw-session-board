@@ -96,6 +96,22 @@ small {
   animation: card-pop 0.6s ease;
 }
 
+.card.running {
+  animation: pulse-run 1.8s ease-in-out infinite;
+  box-shadow:
+    0 22px 46px rgba(16, 185, 129, 0.35),
+    0 0 16px rgba(16, 185, 129, 0.4);
+}
+
+@keyframes pulse-run {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
 @keyframes card-pop {
   0% {
     transform: translateY(-6px) scale(0.98);

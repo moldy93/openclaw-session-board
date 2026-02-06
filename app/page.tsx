@@ -102,6 +102,7 @@ export default function HomePage() {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [lastLogLine, setLastLogLine] = useState<string | null>(null);
   const [lastLogTime, setLastLogTime] = useState<string | null>(null);
+  const [runningBySession, setRunningBySession] = useState<Record<string, boolean>>({});
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const inputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
@@ -208,6 +209,12 @@ export default function HomePage() {
             }
           }
           setLastLogTime(time);
+        }
+
+        if (payload?.type === 'run' && payload?.payload?.sessionId) {
+          const sid = payload.payload.sessionId;
+          const running = !!payload.payload.running;
+          setRunningBySession((prev) => ({ ...prev, [sid]: running }));
         }
 
         if (payload?.type === 'error') {
@@ -361,11 +368,12 @@ export default function HomePage() {
               const showReviewTimer = column === 'review' && updatedAt && elapsed < 15 * 60 * 1000;
               const showDoingTimer = column === 'doing' && updatedAt;
               const justMoved = item.columnEnteredAt && tick - item.columnEnteredAt < 800;
+              const isRunning = sessionId ? !!runningBySession[sessionId] : false;
 
               return (
                 <div className="card-wrap" key={sessionKey}>
                   <div
-                    className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`}
+                    className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''} ${isRunning ? 'running' : ''}`}
                     onClick={() => setExpandedCard(sessionKey)}
                   >
                   <div className="card-title">

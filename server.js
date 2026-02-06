@@ -281,6 +281,21 @@ app.prepare().then(() => {
             send({ type: 'chat', payload: payload?.payload });
             return;
           }
+          if (payload?.type === 'event' && payload?.event === 'diagnostic') {
+            const diag = payload?.payload || {};
+            const sessionId = diag.sessionId || diag.session_id || diag.sessionKey || diag.session_key || null;
+            const reason = diag.reason || diag.event || '';
+            const state = diag.new || diag.state || '';
+            let running = null;
+            if (reason.includes('run_started') || reason.includes('run_registered')) running = true;
+            if (reason.includes('run_completed') || reason.includes('run_cleared')) running = false;
+            if (state === 'processing') running = true;
+            if (state === 'idle') running = false;
+            if (sessionId && running !== null) {
+              send({ type: 'run', payload: { sessionId, running, reason, state } });
+            }
+            return;
+          }
         } catch {
           return;
         }
