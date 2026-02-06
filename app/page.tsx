@@ -220,7 +220,22 @@ export default function HomePage() {
 
   const copy = (value: string | null) => {
     if (!value) return;
-    navigator.clipboard.writeText(value).catch(() => undefined);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        navigator.clipboard.writeText(value).catch(() => undefined);
+        return;
+      }
+    } catch {}
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = value;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    } catch {}
   };
 
   return (
