@@ -90,6 +90,7 @@ export default function HomePage() {
   const [sessions, setSessions] = useState<Record<string, SessionItem>>({});
   const [status, setStatus] = useState<'connecting' | 'live' | 'error'>('connecting');
   const [tick, setTick] = useState(Date.now());
+  const [toast, setToast] = useState<string | null>(null);
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
   const [doingRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
@@ -220,22 +221,30 @@ export default function HomePage() {
 
   const copy = (value: string | null) => {
     if (!value) return;
+    let copied = false;
     try {
       if (navigator?.clipboard?.writeText) {
         navigator.clipboard.writeText(value).catch(() => undefined);
-        return;
+        copied = true;
       }
     } catch {}
-    try {
-      const textarea = document.createElement('textarea');
-      textarea.value = value;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-    } catch {}
+    if (!copied) {
+      try {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        copied = true;
+      } catch {}
+    }
+    if (copied) {
+      setToast('Kopiert');
+      window.setTimeout(() => setToast(null), 1400);
+    }
   };
 
   return (
@@ -332,6 +341,7 @@ export default function HomePage() {
         ))}
       </section>
       <div className={`status floating ${status}`}>{status}</div>
+      {toast && <div className="toast">{toast}</div>}
     </main>
   );
 }

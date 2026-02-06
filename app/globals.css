@@ -250,6 +250,11 @@ small {
   padding: 6px 8px;
 }
 
+.inline-input input {
+  width: 100%;
+  border-radius: 10px;
+}
+
 .message-text {
   white-space: pre-wrap;
 }
@@ -272,6 +277,20 @@ small {
   bottom: 18px;
   z-index: 20;
   box-shadow: 0 12px 30px rgba(2, 6, 23, 0.45);
+}
+
+.toast {
+  position: fixed;
+  right: 18px;
+  bottom: 64px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
+  font-size: 12px;
+  box-shadow: 0 12px 24px rgba(2, 6, 23, 0.45);
+  backdrop-filter: blur(10px);
 }
 
 .status.live {
