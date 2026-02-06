@@ -340,7 +340,7 @@ app.prepare().then(() => {
       let formatted = line;
       try {
         const parsed = JSON.parse(line);
-        const time = parsed?.time ? new Date(parsed.time).toLocaleTimeString() : '';
+        const time = parsed?.time ? new Date(parsed.time).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) : '';
         const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
         const subsystem = parsed?.[0] ? (() => {
           try {
