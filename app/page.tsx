@@ -243,9 +243,10 @@ export default function HomePage() {
               const elapsed = updatedAt ? tick - updatedAt : 0;
               const showReviewTimer = column === 'review' && updatedAt && elapsed < 15 * 60 * 1000;
               const showDoingTimer = column === 'doing' && updatedAt;
+              const justMoved = item.columnEnteredAt && tick - item.columnEnteredAt < 800;
 
               return (
-                <div className={`card ${column} ${isStale ? 'stale' : ''}`} key={sessionKey}>
+                <div className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`} key={sessionKey}>
                   <div className="card-title">
                     <strong>{label}</strong>
                     <div className="card-badges">

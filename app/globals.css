@@ -90,6 +90,21 @@ small {
   color: #e2e8f0;
 }
 
+.card.just-moved {
+  animation: card-pop 0.6s ease;
+}
+
+@keyframes card-pop {
+  0% {
+    transform: translateY(-6px) scale(0.98);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
 .card.backlog {
   background: linear-gradient(145deg, rgba(30, 41, 59, 0.85), rgba(15, 23, 42, 0.5));
   border-color: rgba(148, 163, 184, 0.28);
