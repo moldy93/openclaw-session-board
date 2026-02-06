@@ -191,10 +191,23 @@ export default function HomePage() {
         }
 
         if (payload?.type === 'log' && payload?.payload?.line) {
-          const clean = String(payload.payload.line).replace(/^\d{1,2}:\d{2}:\d{2}\s?(AM|PM)\s+/i, '');
+          const rawLine = String(payload.payload.line);
+          const clean = rawLine.replace(/^\d{1,2}:\d{2}:\d{2}\s?(AM|PM)\s+/i, '');
           setLastLogLine(clean);
-          console.log('footer-log payload', payload.payload);
-          setLastLogTime(payload.payload.time ?? payload.payload.timestamp ?? null);
+          let time = payload.payload.time ?? payload.payload.timestamp ?? null;
+          if (!time) {
+            const m = rawLine.match(/^(\d{1,2}):(\d{2}):(\d{2})\s?(AM|PM)\b/i);
+            if (m) {
+              let hh = parseInt(m[1], 10);
+              const mm = m[2];
+              const ss = m[3];
+              const ap = m[4].toUpperCase();
+              if (ap === 'PM' && hh < 12) hh += 12;
+              if (ap === 'AM' && hh === 12) hh = 0;
+              time = `${String(hh).padStart(2, '0')}:${mm}:${ss}`;
+            }
+          }
+          setLastLogTime(time);
         }
 
         if (payload?.type === 'error') {
@@ -457,7 +470,7 @@ export default function HomePage() {
       {toast && <div className="toast">{toast}</div>}
       <div className="log-footer">
         <span className="log-line">
-          {lastLogTime ? `${new Date(lastLogTime).toISOString().slice(11, -5)} ` : ''}{lastLogLine ?? '—'}
+          {lastLogTime ? `${lastLogTime.includes('T') ? new Date(lastLogTime).toISOString().slice(11, -5) : lastLogTime} ` : ''}{lastLogLine ?? '—'}
         </span>
         <span className={`status ${status}`}>{status}</span>
       </div>
