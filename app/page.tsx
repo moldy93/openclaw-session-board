@@ -300,16 +300,16 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <div
-                    className={`message-box ${item.lastMessage ? '' : 'empty'}`}
-                    ref={(node) => {
-                      logRefs.current[sessionKey] = node;
-                    }}
-                  >
-                    <div className="message-text">
-                      {item.lastMessage ? item.lastMessage : 'No message received yet.'}
+                  {item.lastMessage && (
+                    <div
+                      className="message-box"
+                      ref={(node) => {
+                        logRefs.current[sessionKey] = node;
+                      }}
+                    >
+                      <div className="message-text">{item.lastMessage}</div>
                     </div>
-                  </div>
+                  )}
                 </div>
               );
             })}
