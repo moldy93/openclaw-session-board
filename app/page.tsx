@@ -191,7 +191,8 @@ export default function HomePage() {
         }
 
         if (payload?.type === 'log' && payload?.payload?.line) {
-          setLastLogLine(payload.payload.line);
+          const clean = String(payload.payload.line).replace(/^\d{1,2}:\d{2}:\d{2}\s?(AM|PM)\s+/i, '');
+          setLastLogLine(clean);
           setLastLogTime(payload.payload.time ?? null);
         }
 
