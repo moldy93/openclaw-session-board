@@ -9,9 +9,11 @@ services:
       - ./:/app
       - /Users/m/.openclaw/workspace/kanban/db:/app/db
       - /Users/m/Library/Logs/OpenClaw:/openclaw-logs:ro
+      - /tmp/openclaw:/openclaw-logs-tmp:ro
     environment:
       - NODE_ENV=development
       - OPENCLAW_GATEWAY_WS=ws://host.docker.internal:18789
       - OPENCLAW_GATEWAY_URL=http://host.docker.internal:18789
       - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
-      - OPENCLAW_LOG_FILE=/openclaw-logs/diagnostics.jsonl
+      - OPENCLAW_LOG_DIR=/openclaw-logs-tmp
+      - OPENCLAW_LOG_FILE=/openclaw-logs-tmp/openclaw-latest.log

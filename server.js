@@ -15,7 +15,8 @@ const handle = app.getRequestHandler();
 const gatewayWs = process.env.OPENCLAW_GATEWAY_WS || 'ws://127.0.0.1:18789';
 const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789';
 const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN || '';
-const logFile = process.env.OPENCLAW_LOG_FILE || '/openclaw-logs/diagnostics.jsonl';
+const logFile = process.env.OPENCLAW_LOG_FILE || '/openclaw-logs/openclaw-latest.log';
+const logDir = process.env.OPENCLAW_LOG_DIR || '/openclaw-logs';
 
 const DEVICE_FILE = path.join(process.cwd(), '.openclaw-device.json');
 const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
@@ -296,13 +297,31 @@ app.prepare().then(() => {
 
     connectGateway();
 
+    const resolveLogFile = () => {
+      if (fs.existsSync(logFile)) return logFile;
+      try {
+        const files = fs.readdirSync(logDir)
+          .filter((name) => name.startsWith('openclaw-') && name.endsWith('.log'))
+          .map((name) => ({
+            name,
+            path: path.join(logDir, name),
+            mtime: fs.statSync(path.join(logDir, name)).mtimeMs
+          }))
+          .sort((a, b) => b.mtime - a.mtime);
+        return files.length ? files[0].path : null;
+      } catch {
+        return null;
+      }
+    };
+
     const readLastLogLine = () => {
       try {
-        if (!fs.existsSync(logFile)) return null;
-        const stat = fs.statSync(logFile);
+        const target = resolveLogFile();
+        if (!target || !fs.existsSync(target)) return null;
+        const stat = fs.statSync(target);
         if (!stat.isFile() || stat.size === 0) return null;
         const chunkSize = Math.min(8192, stat.size);
-        const fd = fs.openSync(logFile, 'r');
+        const fd = fs.openSync(target, 'r');
         const buffer = Buffer.alloc(chunkSize);
         fs.readSync(fd, buffer, 0, chunkSize, stat.size - chunkSize);
         fs.closeSync(fd);
