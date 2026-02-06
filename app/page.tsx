@@ -91,7 +91,10 @@ export default function HomePage() {
   const [status, setStatus] = useState<'connecting' | 'live' | 'error'>('connecting');
   const [tick, setTick] = useState(Date.now());
   const [toast, setToast] = useState<string | null>(null);
+  const [expandedCard, setExpandedCard] = useState<string | null>(null);
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const inputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
   const [doingRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
   const [reviewRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
@@ -203,6 +206,15 @@ export default function HomePage() {
     });
   }, [sessions]);
 
+  useEffect(() => {
+    if (!expandedCard) return;
+    const node = inputRefs.current[expandedCard];
+    if (node) {
+      node.focus();
+      node.setSelectionRange(node.value.length, node.value.length);
+    }
+  }, [expandedCard]);
+
   const grouped = useMemo(() => {
     const groups: Record<ColumnKey, SessionItem[]> = {
       backlog: [],
@@ -247,6 +259,17 @@ export default function HomePage() {
     }
   };
 
+  const sendMessage = async (sessionKey: string) => {
+    const text = drafts[sessionKey]?.trim();
+    if (!text) return;
+    await fetch('/api/openclaw/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionKey, message: text })
+    });
+    setDrafts((prev) => ({ ...prev, [sessionKey]: '' }));
+  };
+
   return (
     <main>
       <section className="board">
@@ -281,7 +304,11 @@ export default function HomePage() {
               const justMoved = item.columnEnteredAt && tick - item.columnEnteredAt < 800;
 
               return (
-                <div className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`} key={sessionKey}>
+                <div
+                  className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`}
+                  key={sessionKey}
+                  onClick={() => setExpandedCard(sessionKey)}
+                >
                   <div className="card-title">
                     <strong>{label}</strong>
                     <div className="card-badges">
@@ -295,7 +322,14 @@ export default function HomePage() {
                     <div className="meta-row">
                       <span className="meta-label">Agent</span>
                       <span className="meta-value">{ellipsize(agentLabel)}</span>
-                      <button className="copy" onClick={() => copy(agentLabel)} aria-label="Copy agent">
+                      <button
+                        className="copy"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          copy(agentLabel);
+                        }}
+                        aria-label="Copy agent"
+                      >
                         ⧉
                       </button>
                     </div>
@@ -308,7 +342,10 @@ export default function HomePage() {
                       <span className="meta-value">{sessionId ? ellipsize(sessionId) : '—'}</span>
                       <button
                         className="copy"
-                        onClick={() => copy(sessionId)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          copy(sessionId);
+                        }}
                         aria-label="Copy session id"
                         disabled={!sessionId}
                       >
@@ -334,6 +371,27 @@ export default function HomePage() {
                       <div className="message-text">{item.lastMessage}</div>
                     </div>
                   )}
+
+                  <div className={`composer ${expandedCard === sessionKey ? 'open' : ''}`}>
+                    <textarea
+                      ref={(node) => {
+                        inputRefs.current[sessionKey] = node;
+                      }}
+                      rows={1}
+                      placeholder="Nachricht schreiben…"
+                      value={drafts[sessionKey] ?? ''}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={(event) => {
+                        setDrafts((prev) => ({ ...prev, [sessionKey]: event.target.value }));
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault();
+                          sendMessage(sessionKey);
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })}

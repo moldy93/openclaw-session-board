@@ -259,6 +259,30 @@ small {
   white-space: pre-wrap;
 }
 
+.composer {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 220ms ease, opacity 220ms ease;
+}
+
+.composer.open {
+  max-height: 160px;
+  opacity: 1;
+}
+
+.composer textarea {
+  width: 100%;
+  resize: none;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.6);
+  color: #e2e8f0;
+  padding: 8px 10px;
+  font: inherit;
+  min-height: 38px;
+}
+
 .status {
   font-size: 12px;
   padding: 6px 10px;
