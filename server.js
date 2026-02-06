@@ -341,7 +341,7 @@ app.prepare().then(() => {
       let time = '';
       try {
         const parsed = JSON.parse(line);
-        time = parsed?.time ? parsed.time : '';
+        time = parsed?.time ? parsed.time : new Date().toISOString();
         const level = parsed?._meta?.logLevelName || parsed?._meta?.level || '';
         const subsystem = parsed?.[0] ? (() => {
           try {
