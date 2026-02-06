@@ -240,10 +240,9 @@ export default function HomePage() {
                 : item.session.model ?? '—';
               const updatedAt = item.session.updatedAt ?? 0;
               const isStale = column === 'review' && updatedAt > 0 && Date.now() - updatedAt > 24 * 60 * 60 * 1000;
-              const enteredAt = item.columnEnteredAt ?? updatedAt ?? Date.now();
-              const elapsed = tick - enteredAt;
-              const showReviewTimer = column === 'review' && elapsed < 15 * 60 * 1000;
-              const showDoingTimer = column === 'doing';
+              const elapsed = updatedAt ? tick - updatedAt : 0;
+              const showReviewTimer = column === 'review' && updatedAt && elapsed < 15 * 60 * 1000;
+              const showDoingTimer = column === 'doing' && updatedAt;
 
               return (
                 <div className={`card ${column} ${isStale ? 'stale' : ''}`} key={sessionKey}>
