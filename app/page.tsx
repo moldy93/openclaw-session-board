@@ -453,8 +453,8 @@ export default function HomePage() {
       <div className={`status floating ${status}`}>{status}</div>
       {toast && <div className="toast">{toast}</div>}
       <div className="log-footer">
-        <span className="log-label">Last log</span>
         <span className="log-line">{lastLogLine ?? '—'}</span>
+        <span className={`status ${status}`}>{status}</span>
       </div>
     </main>
   );
