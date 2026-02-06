@@ -163,6 +163,11 @@ small {
   line-height: 1.4;
 }
 
+.message-box.empty {
+  height: auto;
+  padding: 6px 8px;
+}
+
 .message-text {
   white-space: pre-wrap;
 }

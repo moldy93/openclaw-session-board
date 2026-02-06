@@ -230,7 +230,7 @@ export default function HomePage() {
                   </div>
 
                   <div
-                    className="message-box"
+                    className={`message-box ${item.lastMessage ? '' : 'empty'}`}
                     ref={(node) => {
                       logRefs.current[sessionKey] = node;
                     }}
