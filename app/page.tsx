@@ -220,11 +220,6 @@ export default function HomePage() {
 
   return (
     <main>
-      <header>
-        <div />
-        <div className={`status ${status}`}>{status}</div>
-      </header>
-
       <section className="board">
         {columns.map((column) => (
           <div className={`column ${column}`} key={column}>
@@ -305,6 +300,7 @@ export default function HomePage() {
           </div>
         ))}
       </section>
+      <div className={`status floating ${status}`}>{status}</div>
     </main>
   );
 }
