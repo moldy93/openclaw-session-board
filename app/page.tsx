@@ -15,6 +15,13 @@ type GatewaySession = {
   model?: string;
   modelProvider?: string;
   updatedAt?: number;
+  channel?: string;
+  lastChannel?: string;
+  deliveryContext?: {
+    channel?: string;
+    to?: string;
+    accountId?: string;
+  };
 };
 
 type SessionItem = {
@@ -93,6 +100,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [lastLogLine, setLastLogLine] = useState<string | null>(null);
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const inputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
@@ -181,6 +189,10 @@ export default function HomePage() {
           });
         }
 
+        if (payload?.type === 'log' && payload?.payload?.line) {
+          setLastLogLine(payload.payload.line);
+        }
+
         if (payload?.type === 'error') {
           setStatus('error');
         }
@@ -215,6 +227,18 @@ export default function HomePage() {
     }
   }, [expandedCard]);
 
+  useEffect(() => {
+    const handler = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (!target) return;
+      if (!target.closest('.card-wrap')) {
+        setExpandedCard(null);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, []);
+
   const grouped = useMemo(() => {
     const groups: Record<ColumnKey, SessionItem[]> = {
       backlog: [],
@@ -226,6 +250,17 @@ export default function HomePage() {
     Object.values(sessions).forEach((item) => {
       const column = resolveColumn(item);
       groups[column].push(item);
+    });
+
+    (Object.keys(groups) as ColumnKey[]).forEach((column) => {
+      groups[column].sort((a, b) => {
+        const aUpdated = a.session.updatedAt ?? 0;
+        const bUpdated = b.session.updatedAt ?? 0;
+        if (bUpdated !== aUpdated) return bUpdated - aUpdated;
+        const aSeen = a.firstSeenAt ?? 0;
+        const bSeen = b.firstSeenAt ?? 0;
+        return bSeen - aSeen;
+      });
     });
 
     return groups;
@@ -259,19 +294,26 @@ export default function HomePage() {
     }
   };
 
-  const sendMessage = async (sessionKey: string) => {
+  const sendMessage = async (sessionKey: string, session: GatewaySession) => {
     const text = drafts[sessionKey]?.trim();
     if (!text) return;
     await fetch('/api/openclaw/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionKey, message: text })
+      body: JSON.stringify({
+        sessionKey,
+        message: text,
+        deliveryContext: session.deliveryContext,
+        channel: session.channel,
+        lastChannel: session.lastChannel
+      })
     });
     setDrafts((prev) => ({ ...prev, [sessionKey]: '' }));
   };
 
   return (
     <main>
+      <a className="chat-fab" href="/chat" aria-label="Open chat">💬</a>
       <section className="board">
         {columns.map((column) => (
           <div
@@ -304,11 +346,11 @@ export default function HomePage() {
               const justMoved = item.columnEnteredAt && tick - item.columnEnteredAt < 800;
 
               return (
-                <div
-                  className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`}
-                  key={sessionKey}
-                  onClick={() => setExpandedCard(sessionKey)}
-                >
+                <div className="card-wrap" key={sessionKey}>
+                  <div
+                    className={`card ${column} ${isStale ? 'stale' : ''} ${justMoved ? 'just-moved' : ''}`}
+                    onClick={() => setExpandedCard(sessionKey)}
+                  >
                   <div className="card-title">
                     <strong>{label}</strong>
                     <div className="card-badges">
@@ -368,11 +410,16 @@ export default function HomePage() {
                         logRefs.current[sessionKey] = node;
                       }}
                     >
-                      <div className="message-text">{item.lastMessage}</div>
+                      <textarea
+                        className="message-textarea"
+                        readOnly
+                        value={item.lastMessage}
+                      />
                     </div>
                   )}
 
-                  <div className={`composer ${expandedCard === sessionKey ? 'open' : ''}`}>
+                  </div>
+                  <div className={`composer docked ${expandedCard === sessionKey ? 'open' : ''}`}>
                     <textarea
                       ref={(node) => {
                         inputRefs.current[sessionKey] = node;
@@ -381,13 +428,18 @@ export default function HomePage() {
                       placeholder="Nachricht schreiben…"
                       value={drafts[sessionKey] ?? ''}
                       onClick={(event) => event.stopPropagation()}
+                      onInput={(event) => {
+                        const target = event.currentTarget;
+                        target.style.height = 'auto';
+                        target.style.height = `${Math.min(target.scrollHeight, 140)}px`;
+                      }}
                       onChange={(event) => {
                         setDrafts((prev) => ({ ...prev, [sessionKey]: event.target.value }));
                       }}
                       onKeyDown={(event) => {
                         if (event.key === 'Enter' && !event.shiftKey) {
                           event.preventDefault();
-                          sendMessage(sessionKey);
+                          sendMessage(sessionKey, item.session);
                         }
                       }}
                     />
@@ -400,6 +452,10 @@ export default function HomePage() {
       </section>
       <div className={`status floating ${status}`}>{status}</div>
       {toast && <div className="toast">{toast}</div>}
+      <div className="log-footer">
+        <span className="log-label">Last log</span>
+        <span className="log-line">{lastLogLine ?? '—'}</span>
+      </div>
     </main>
   );
 }

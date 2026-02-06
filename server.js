@@ -5,6 +5,7 @@ const path = require('path');
 const next = require('next');
 const { WebSocketServer } = require('ws');
 const WebSocket = require('ws');
+const { exec } = require('child_process');
 
 const port = parseInt(process.env.PORT || '3000', 10);
 const dev = process.env.NODE_ENV !== 'production';
@@ -14,6 +15,7 @@ const handle = app.getRequestHandler();
 const gatewayWs = process.env.OPENCLAW_GATEWAY_WS || 'ws://127.0.0.1:18789';
 const gatewayUrl = process.env.OPENCLAW_GATEWAY_URL || 'http://127.0.0.1:18789';
 const gatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN || '';
+const logFile = process.env.OPENCLAW_LOG_FILE || '/openclaw-logs/diagnostics.jsonl';
 
 const DEVICE_FILE = path.join(process.cwd(), '.openclaw-device.json');
 const ED25519_SPKI_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
@@ -227,6 +229,8 @@ app.prepare().then(() => {
     let gateway = null;
     let connected = false;
     let interval = null;
+    let logInterval = null;
+    let lastLogLine = '';
     const lastUpdatedAt = new Map();
 
     const send = (data) => {
@@ -292,14 +296,44 @@ app.prepare().then(() => {
 
     connectGateway();
 
+    const readLastLogLine = () => {
+      try {
+        if (!fs.existsSync(logFile)) return null;
+        const stat = fs.statSync(logFile);
+        if (!stat.isFile() || stat.size === 0) return null;
+        const chunkSize = Math.min(8192, stat.size);
+        const fd = fs.openSync(logFile, 'r');
+        const buffer = Buffer.alloc(chunkSize);
+        fs.readSync(fd, buffer, 0, chunkSize, stat.size - chunkSize);
+        fs.closeSync(fd);
+        const text = buffer.toString('utf8');
+        const lines = text.split(/\r?\n/).filter(Boolean);
+        return lines.length ? lines[lines.length - 1] : null;
+      } catch {
+        return null;
+      }
+    };
+
+    const pollLogLine = () => {
+      const line = readLastLogLine();
+      if (!line || line === lastLogLine) return;
+      lastLogLine = line;
+      send({ type: 'log', payload: { line } });
+    };
+
     interval = setInterval(() => {
       if (gateway && connected && gateway.readyState === WebSocket.OPEN) {
         requestSessions(gateway);
       }
     }, 1000);
 
+    logInterval = setInterval(() => {
+      pollLogLine();
+    }, 1000);
+
     client.on('close', () => {
       if (interval) clearInterval(interval);
+      if (logInterval) clearInterval(logInterval);
       if (gateway && gateway.readyState === WebSocket.OPEN) {
         gateway.close();
       }

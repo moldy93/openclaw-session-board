@@ -62,11 +62,13 @@ export default function ChatView() {
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [messages, setMessages] = useState<HistoryMessage[]>([]);
+  const [historyLimit, setHistoryLimit] = useState(60);
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const refreshTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -112,6 +114,15 @@ export default function ChatView() {
               }
               return [...prev, { role, content: text, createdAt: Date.now() }];
             });
+            if (refreshTimer.current) {
+              window.clearTimeout(refreshTimer.current);
+            }
+            refreshTimer.current = window.setTimeout(() => {
+              fetch(`/api/openclaw/history?sessionKey=${encodeURIComponent(key)}&limit=120`)
+                .then((res) => res.json())
+                .then((data) => setMessages(data?.messages ?? []))
+                .catch(() => undefined);
+            }, 600);
           }
         }
       } catch {
@@ -123,13 +134,12 @@ export default function ChatView() {
   }, [selected]);
 
   useEffect(() => {
-    const key = hovered || selected;
-    if (!key) return;
-    fetch(`/api/openclaw/history?sessionKey=${encodeURIComponent(key)}&limit=80`)
+    if (!selected) return;
+    fetch(`/api/openclaw/history?sessionKey=${encodeURIComponent(selected)}&limit=${historyLimit}`)
       .then((res) => res.json())
       .then((data) => setMessages(data?.messages ?? []))
       .catch(() => undefined);
-  }, [selected, hovered]);
+  }, [selected, historyLimit]);
 
   useEffect(() => {
     if (!listRef.current) return;
@@ -184,8 +194,15 @@ export default function ChatView() {
     }
   };
 
+  const handleScroll = () => {
+    const node = listRef.current;
+    if (!node || node.scrollTop > 40) return;
+    setHistoryLimit((prev) => Math.min(prev + 60, 500));
+  };
+
   return (
     <main className="chat-layout">
+      <a className="chat-close" href="/" aria-label="Close chat">✕</a>
       <button className="chat-menu" onClick={() => setSidebarOpen((prev) => !prev)}>☰</button>
       <aside className={`chat-sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="chat-sidebar-header">Sessions</div>
@@ -222,7 +239,7 @@ export default function ChatView() {
         <div className="chat-panel-header">
           {selected ? sessions[selected]?.displayName || selected : '—'}
         </div>
-        <div className="chat-thread" ref={listRef}>
+        <div className="chat-thread" ref={listRef} onScroll={handleScroll}>
           {(() => {
             const items: JSX.Element[] = [];
             for (let i = 0; i < messages.length; i += 1) {
