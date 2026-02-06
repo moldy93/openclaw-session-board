@@ -29,6 +29,5 @@ docker compose up -d
 Open http://localhost:3000
 
 ## Notes
-- SQLite database stored at `db/kanban.db` (created on first run; ignored in git)
 - Columns: backlog / doing / review / done
 - Realtime updates via Gateway WebSocket + periodic sessions.list
