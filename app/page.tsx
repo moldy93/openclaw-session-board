@@ -1,5 +1,6 @@
 'use client';
 
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -90,6 +91,10 @@ export default function HomePage() {
   const [status, setStatus] = useState<'connecting' | 'live' | 'error'>('connecting');
   const [tick, setTick] = useState(Date.now());
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [backlogRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
+  const [doingRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
+  const [reviewRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
+  const [doneRef] = useAutoAnimate({ duration: 260, easing: 'ease-out' });
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
@@ -222,7 +227,19 @@ export default function HomePage() {
     <main>
       <section className="board">
         {columns.map((column) => (
-          <div className={`column ${column}`} key={column}>
+          <div
+            className={`column ${column}`}
+            key={column}
+            ref={
+              column === 'backlog'
+                ? (backlogRef as React.RefObject<HTMLDivElement>)
+                : column === 'doing'
+                  ? (doingRef as React.RefObject<HTMLDivElement>)
+                  : column === 'review'
+                    ? (reviewRef as React.RefObject<HTMLDivElement>)
+                    : (doneRef as React.RefObject<HTMLDivElement>)
+            }
+          >
             <h2>{column}</h2>
             {grouped[column].length === 0 && <small className="muted">No sessions.</small>}
             {grouped[column].map((item) => {
