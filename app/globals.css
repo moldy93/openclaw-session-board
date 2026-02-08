@@ -362,17 +362,11 @@ small {
   z-index: 15;
 }
 
-.log-lines {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  max-height: 110px;
-  overflow-y: auto;
-}
-
 .log-line {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-  white-space: pre-wrap;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .log-footer .status {
