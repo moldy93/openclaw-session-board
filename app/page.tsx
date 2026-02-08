@@ -100,8 +100,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
-  const [lastLogLine, setLastLogLine] = useState<string | null>(null);
-  const [lastLogTime, setLastLogTime] = useState<string | null>(null);
+  const [logLines, setLogLines] = useState<string[]>([]);
   const [runningBySession, setRunningBySession] = useState<Record<string, boolean>>({});
   const logRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const inputRefs = useRef<Record<string, HTMLTextAreaElement | null>>({});
@@ -191,24 +190,12 @@ export default function HomePage() {
           });
         }
 
-        if (payload?.type === 'log' && payload?.payload?.line) {
-          const rawLine = String(payload.payload.line);
-          const clean = rawLine.replace(/^\d{1,2}:\d{2}:\d{2}\s?(AM|PM)\s+/i, '');
-          setLastLogLine(clean);
-          let time = payload.payload.time ?? payload.payload.timestamp ?? null;
-          if (!time) {
-            const m = rawLine.match(/^(\d{1,2}):(\d{2}):(\d{2})\s?(AM|PM)\b/i);
-            if (m) {
-              let hh = parseInt(m[1], 10);
-              const mm = m[2];
-              const ss = m[3];
-              const ap = m[4].toUpperCase();
-              if (ap === 'PM' && hh < 12) hh += 12;
-              if (ap === 'AM' && hh === 12) hh = 0;
-              time = `${String(hh).padStart(2, '0')}:${mm}:${ss}`;
-            }
-          }
-          setLastLogTime(time);
+        if (payload?.type === 'log' && Array.isArray(payload?.payload?.lines)) {
+          const incoming = payload.payload.lines.map((line: string) => String(line));
+          setLogLines((prev) => {
+            const next = [...prev, ...incoming];
+            return next.slice(Math.max(next.length - 200, 0));
+          });
         }
 
         if (payload?.type === 'run' && payload?.payload?.sessionId) {
@@ -477,9 +464,14 @@ export default function HomePage() {
       </section>
       {toast && <div className="toast">{toast}</div>}
       <div className="log-footer">
-        <span className="log-line">
-          {lastLogTime ? `${lastLogTime.includes('T') ? new Date(lastLogTime).toISOString().slice(11, -5) : lastLogTime} ` : ''}{lastLogLine ?? '—'}
-        </span>
+        <div className="log-lines">
+          {logLines.length === 0 && <span className="log-line">—</span>}
+          {logLines.map((line, idx) => (
+            <span key={`${idx}-${line}`} className="log-line">
+              {line}
+            </span>
+          ))}
+        </div>
         <span className={`status ${status}`}>{status}</span>
       </div>
     </main>

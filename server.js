@@ -242,7 +242,6 @@ app.prepare().then(() => {
     let connected = false;
     let interval = null;
     let logInterval = null;
-    let lastLogLine = '';
     let logCursor = null;
     const lastUpdatedAt = new Map();
 
@@ -293,11 +292,7 @@ app.prepare().then(() => {
             const lines = payload?.payload?.lines || [];
             logCursor = payload?.payload?.cursor ?? logCursor;
             if (lines.length > 0) {
-              const line = lines[lines.length - 1];
-              if (line && line !== lastLogLine) {
-                lastLogLine = line;
-                send({ type: 'log', payload: { line, time: null } });
-              }
+              send({ type: 'log', payload: { lines, time: null } });
             }
             return;
           }
